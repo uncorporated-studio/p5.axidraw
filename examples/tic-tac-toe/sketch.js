@@ -17,8 +17,10 @@ let minVal = 0; // Minimum value for the drawing area in millimeters.
 let maxVal = 50; // Maximum value for the drawing area in millimeters.
 let space = maxVal / 3; // Space between grid lines in the tic-tac-toe board.
 
-let moves = [[], []];
+let gameState = new GameState();
 let winner = -1;
+
+let ai = new AiPlayer();
 
 ///
 /// game logic
@@ -27,18 +29,13 @@ let winner = -1;
 function addMove(c){
   let mIdx = 0;
   if(isCircle) mIdx = 1;
-  moves[mIdx].push(c);
+  gameState.addMove(mIdx, c);
   checkWin();
 }
 
 function isMoveAllowed(mIdx, c){
   if(winner>=0)return false;
-  for(let i=0;i<moves[mIdx].length;i++){
-    if(c.x==moves[mIdx][i].x && c.y==moves[mIdx][i].y){
-      return false;
-    }
-  }
-  return true;
+  return gameState.isCellFree(c);
 }
 
 function drawMoves(){
@@ -47,13 +44,13 @@ function drawMoves(){
   let m=0;
   strokeWeight(1);
   if(winner==0)strokeWeight(3);
-  for(m=0;m<moves[0].length;m++){
-    drawScreenX(moves[0][m]);
+  for(m=0;m<gameState.history[0].length;m++){
+    drawScreenX(gameState.history[0][m]);
   }
   strokeWeight(1);
   if(winner==1)strokeWeight(3);
-  for(m=0;m<moves[1].length;m++){
-    drawScreenCircle(moves[1][m]);
+  for(m=0;m<gameState.history[1].length;m++){
+    drawScreenCircle(gameState.history[1][m]);
   }
   strokeWeight(1);
 }
@@ -84,22 +81,22 @@ function checkWin(){
 }
 
 function checkWinForPlayer(idx){
-  if(moves[idx].length<3)return false;
+  if(gameState.history[idx].length<3)return false;
   let sameX = [0,0,0];
   let sameY = [0,0,0];
   let sameXY = 0;
   let oppositeXY = 0;
-  for(let i=0;i<moves[idx].length;i++){
-    if(moves[idx][i].x == moves[idx][i].y){
+  for(let i=0;i<gameState.history[idx].length;i++){
+    if(gameState.history[idx][i].x == gameState.history[idx][i].y){
       sameXY++;
-      if(moves[idx][i].x==1) oppositeXY++;
+      if(gameState.history[idx][i].x==1) oppositeXY++;
       if(sameXY>=3)return true;
-    }else if(moves[idx][i].x==0&&moves[idx][i].y==2 || moves[idx][i].x==2&&moves[idx][i].y==0){
+    }else if(gameState.history[idx][i].x==0&&gameState.history[idx][i].y==2 || gameState.history[idx][i].x==2&&gameState.history[idx][i].y==0){
       oppositeXY++;
     }
     
-    sameX[moves[idx][i].x] ++;
-    sameY[moves[idx][i].y] ++;
+    sameX[gameState.history[idx][i].x] ++;
+    sameY[gameState.history[idx][i].y] ++;
 
     for(let j=0;j<3;j++){
       if(sameX[j]>=3)return true;
@@ -231,6 +228,8 @@ function mouseClicked() {
   // Handles mouse clicks for and making moves.
   if(!connected && !skipped)return;
 
+  if(isCircle)return;
+
   let c = getMoveCoords(); // Get the cell coordinates based on the mouse position.
   let mIdx = 0;
   if(isCircle) mIdx = 1;
@@ -240,15 +239,18 @@ function mouseClicked() {
   }
   addMove(c);
   if(connected){
-    if (isCircle) {
-      drawCircle(c); // Draw a circle if it’s the circle's turn.
-    } else {
-      drawX(c); // Otherwise, draw an X.
-    }
-    
+    drawX(c);
     axi.moveTo(0, 0); // Move back to the origin after drawing.
   }
   isCircle = !isCircle; // Toggle between circle and X for the next turn.
+
+  c = ai.makeMove(gameState);
+  addMove(c);
+  if(connected){
+    drawCircle(c);
+    axi.moveTo(0,0);
+  }
+  isCircle = !isCircle;
 }
 
 function keyPressed(){
