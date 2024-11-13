@@ -58,6 +58,6 @@ function keyPressed(){
 
 function mouseClicked(){
     if(curAppState == AppState.Idle)return;
-
+    if(plotter.isBusy())return;
     svgLibrary.addPolyAtPosition(0, createVector(mouseX, mouseY), plotter);
 }

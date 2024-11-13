@@ -18,4 +18,9 @@ class Plotter{
         }
         this.penUp();
     }
+
+    isBusy(){
+        if(!this.robot.connected)return false;
+        return this.robot.isBusy();
+    }
 }
