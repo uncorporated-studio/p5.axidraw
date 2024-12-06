@@ -1,6 +1,91 @@
 
 class AiPlayer{
     constructor(){
+
+    }
+
+    move(g){
+        if(g.countAllMoves()==1){
+            return this.answerOpeningMove(g);
+        }else{
+            let c = this.findWinningOrBlockingMove(g);
+            if(c.x>=0) return g.addMove(c, 1);
+
+            return this.makeRandomMove(g);
+        }
+    }
+
+    answerOpeningMove(g){
+        let c = g.lastMove;
+        let mt = g.getMoveType(c);
+        let r;
+        switch(mt){
+            case MoveType.Center:
+                //take a corner
+                r = Math.floor(Math.random()*4);
+                switch(r){
+                    case 0:
+                        return g.addMove(createVector(0,0), 1);
+                    case 1:
+                        return g.addMove(createVector(2,0), 1);
+                    case 2:
+                        return g.addMove(createVector(2,2), 1);
+                    case 3:
+                    default:
+                        return g.addMove(createVector(0,2), 1);
+                }
+            case MoveType.Edge:
+                //take the center or an adjacent corner
+                r = Math.random();
+                if(r>0.5){
+                    return g.addMove(createVector(1,1), 1);
+                }else{
+                    let inc = r>0.25? 1:-1;
+                    if(c.y==1){
+                        //vertical edge
+                        return g.addMove(createVector(c.x, c.y+inc), 1);
+                    }else{
+                        //horizontal edge
+                        return g.addMove(createVector(c.x+inc, c.y), 1);
+                    }
+                }
+            case MoveType.Corner:
+                //take the center
+                return g.addMove(createVector(1,1), 1);
+            default:
+                return MoveOutcome.Forbidden;
+        }
+    }
+
+    findWinningOrBlockingMove(g){
+        let c = createVector(-1,-1);
+        for(let y=0;y<3;y++){
+            for(let x=0;x<3;x++){
+                if(g.board[y][x]<0){
+                    let cm =createVector(x,y);
+                    if(g.isWinningMove(cm)){
+                        return cm;
+                    }
+                }
+            }
+        }
+        return c;
+    }
+
+    makeRandomMove(g){
+        let freeMoves = [];
+        for(let y=0;y<3;y++){
+            for(let x=0;x<3;x++){
+                if(g.board[y][x]<0){
+                    freeMoves.push(createVector(x,y));
+                }
+            }
+        }
+        let m = Math.floor(Math.random()*freeMoves.length);
+        return g.addMove(freeMoves[m], 1);
+    }
+
+    /*constructor(){
         this.opponentFirstMove = MoveType.Center;
     }
 
@@ -148,5 +233,5 @@ class AiPlayer{
             this.opponentFirstMove = MoveType.Corner;
             return createVector(1, 1);
         }
-    }
+    }*/
 }
